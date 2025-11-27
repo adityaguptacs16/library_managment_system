@@ -4,7 +4,6 @@ const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs");
 const JWT_SECRET = "12345@abcd12";
 const jwt = require("jsonwebtoken");
-const {OtpModel} = require("../model/OtpModel");
 const userController = {};
 
 userController.userRegistration = async (req, res) => {
@@ -122,66 +121,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-
-userController.forgotPassword = async (req, res) => {
-  const { email } = req.body;
-  try {
-    const user = await UserModel.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found" });
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    await OtpModel.findOneAndUpdate(
-      { email },
-      { otp, createdAt: new Date() },
-      { upsert: true, new: true }
-    );
-
-    await transporter.sendMail({
-      from: process.env.EMAIL,
-      to: email,
-      subject: "Your OTP for Password Reset",
-      html: `<p>Your OTP is <strong>${otp}</strong>. It is valid for 10 minutes.</p>`,
-    });
-
-    res.json({ message: "OTP sent to your email" });
-  } catch (error) {
-    console.error("Forgot password error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-
-userController.verifyOTP = async (req, res) => {
-  const { email, otp } = req.body;
-  try {
-    const record = await OtpModel.findOne({ email });
-    if (!record || record.otp !== otp) {
-      return res.status(400).json({ message: "Invalid OTP" });
-    }
-
-    const otpAge = (new Date() - new Date(record.createdAt)) / (1000 * 60);
-    if (otpAge > 10) return res.status(400).json({ message: "OTP expired" });
-
-    res.json({ message: "OTP verified" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-
-userController.resetPassword = async (req, res) => {
-  const { email, newPassword } = req.body;
-  try {
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await UserModel.findOneAndUpdate({ email }, { password: hashedPassword });
-    await OtpModel.deleteOne({ email }); // Clean up OTP
-
-    res.json({ message: "Password reset successful" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
 
 
 module.exports = {userController}
