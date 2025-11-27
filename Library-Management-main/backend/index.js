@@ -17,7 +17,6 @@ const allowedOrigins = [
 
 app.use(express.json()); 
 
-// 🔥 FIXED CORS (FINAL)
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -31,7 +30,6 @@ app.use(cors({
   credentials: true,
 }));
 
-// 🔥 ROUTES
 app.use("/users", users);
 app.use("/books", books);
 app.use("/admin", admin);
@@ -42,7 +40,6 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-// 🔥 DB + SERVER
 const PORT = process.env.PORT || 5000;
 const uri = process.env.MONGO_URI;
 
